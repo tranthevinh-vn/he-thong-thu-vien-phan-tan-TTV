@@ -86,6 +86,9 @@ docker compose up -d --build
 
 - Client: `http://<VM_IP>:8081`
 - API: `http://<VM_IP>:8080`
+- Health check: `http://<VM_IP>:8080/health` (live: `/health/live`, ready: `/health/ready`)
+- RabbitMQ management: `http://<VM_IP>:15672`
+- Khi chạy Docker, API tự động chạy migration (`Database__AutoMigrate=true`).
 
 ## API tối thiểu
 
@@ -113,5 +116,5 @@ docker compose up -d --build
 - [x] Tuần 4: Reservation + Outbox
 - [x] Tuần 5: Worker + chống oversell + idempotent + retry/DLQ
 - [x] Tuần 6: Borrow/Return + Audit + Correlation ID
-- [ ] Tuần 7: Docker hóa full stack + resilience
+- [x] Tuần 7: Docker hóa full stack + resilience
 - [ ] Tuần 8: Test + báo cáo + demo
