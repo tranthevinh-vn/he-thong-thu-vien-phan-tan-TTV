@@ -39,4 +39,69 @@ public class LibraryApiClient
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<BookDetailDto>(JsonOptions, ct);
     }
+
+    public async Task<List<UserDto>?> GetUsersAsync(CancellationToken ct = default)
+    {
+        return await _http.GetFromJsonAsync<List<UserDto>>("/users", JsonOptions, ct);
+    }
+
+    public async Task<ReservationDto?> CreateReservationAsync(Guid userId, Guid bookId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "/reservations",
+            new CreateReservationRequest { UserId = userId, BookId = bookId },
+            JsonOptions,
+            ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<ReservationDto>(JsonOptions, ct);
+    }
+
+    public async Task<ReservationDto?> GetReservationAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"/reservations/{id}", ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<ReservationDto>(JsonOptions, ct);
+    }
+
+    public async Task<List<ReservationDto>?> GetUserReservationsAsync(Guid userId, string? status = null, CancellationToken ct = default)
+    {
+        var url = $"/users/{userId}/reservations";
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            url += $"?status={Uri.EscapeDataString(status)}";
+        }
+
+        return await _http.GetFromJsonAsync<List<ReservationDto>>(url, JsonOptions, ct);
+    }
+
+    public async Task<ReservationDto?> BorrowAsync(Guid id, CancellationToken ct = default)
+    {
+        return await PostReservationActionAsync($"/reservations/{id}/borrow", ct);
+    }
+
+    public async Task<ReservationDto?> ReturnAsync(Guid id, CancellationToken ct = default)
+    {
+        return await PostReservationActionAsync($"/reservations/{id}/return", ct);
+    }
+
+    private async Task<ReservationDto?> PostReservationActionAsync(string url, CancellationToken ct)
+    {
+        var response = await _http.PostAsync(url, content: null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<ReservationDto>(JsonOptions, ct);
+    }
 }

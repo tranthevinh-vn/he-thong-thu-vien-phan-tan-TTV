@@ -1,3 +1,4 @@
+using Library.Client.Web.Models;
 using Library.Client.Web.Services;
 using Library.Contracts.Dtos;
 using Microsoft.AspNetCore.Mvc;
@@ -29,6 +30,8 @@ public class BooksController : Controller
             return NotFound();
         }
 
-        return View(book);
+        var users = await _api.GetUsersAsync(ct) ?? new List<UserDto>();
+
+        return View(new BookDetailsViewModel { Book = book, Users = users });
     }
 }

@@ -1,0 +1,83 @@
+@model Library.Client.Web.Models.ReservationsIndexViewModel
+@{
+    ViewData["Title"] = "Đơn đặt mượn";
+    var statuses = new[] { "", "Pending", "Reserved", "Rejected", "Borrowed", "Returned" };
+}
+
+<h1>Đơn đặt mượn</h1>
+
+<form method="get" asp-action="Index" class="row g-2 mb-3 align-items-end">
+    <div class="col-md-4">
+        <label class="form-label" for="userId">Người dùng</label>
+        <select id="userId" name="userId" class="form-select" onchange="this.form.submit()">
+            @foreach (var user in Model.Users)
+            {
+                if (user.Id == Model.SelectedUserId)
+                {
+                    <option value="@user.Id" selected>@user.Name (@user.Email)</option>
+                }
+                else
+                {
+                    <option value="@user.Id">@user.Name (@user.Email)</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label" for="status">Trạng thái</label>
+        <select id="status" name="status" class="form-select" onchange="this.form.submit()">
+            @foreach (var status in statuses)
+            {
+                var label = string.IsNullOrEmpty(status) ? "Tất cả" : status;
+                if (status == Model.Status)
+                {
+                    <option value="@status" selected>@label</option>
+                }
+                else
+                {
+                    <option value="@status">@label</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Lọc</button>
+    </div>
+</form>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Sách</th>
+            <th>Trạng thái</th>
+            <th>Ngày tạo</th>
+            <th>Xử lý lúc</th>
+            <th>Lý do từ chối</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @if (Model.Reservations.Count == 0)
+    {
+        <tr>
+            <td colspan="6" class="text-center text-muted">Chưa có đơn đặt mượn.</td>
+        </tr>
+    }
+    else
+    {
+        foreach (var item in Model.Reservations)
+        {
+            <tr>
+                <td>@item.BookTitle</td>
+                <td><span class="badge bg-secondary">@item.Status</span></td>
+                <td>@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@(item.ProcessedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                <td>@item.RejectReason</td>
+                <td>
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@item.Id">Chi tiết</a>
+                </td>
+            </tr>
+        }
+    }
+    </tbody>
+</table>

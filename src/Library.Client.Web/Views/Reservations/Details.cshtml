@@ -1,0 +1,45 @@
+@model Library.Contracts.Dtos.ReservationDto
+@{
+    ViewData["Title"] = "Chi tiết đơn đặt mượn";
+}
+
+<h1>Đơn đặt mượn</h1>
+
+<dl class="row">
+    <dt class="col-sm-3">Mã đơn</dt>
+    <dd class="col-sm-9">@Model.Id</dd>
+
+    <dt class="col-sm-3">Sách</dt>
+    <dd class="col-sm-9">@Model.BookTitle</dd>
+
+    <dt class="col-sm-3">Trạng thái</dt>
+    <dd class="col-sm-9"><span class="badge bg-secondary">@Model.Status</span></dd>
+
+    <dt class="col-sm-3">Ngày tạo</dt>
+    <dd class="col-sm-9">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</dd>
+
+    <dt class="col-sm-3">Xử lý lúc</dt>
+    <dd class="col-sm-9">@(Model.ProcessedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss") ?? "-")</dd>
+
+    <dt class="col-sm-3">Lý do từ chối</dt>
+    <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.RejectReason) ? "-" : Model.RejectReason)</dd>
+</dl>
+
+@if (Model.Status == Library.Contracts.Enums.ReservationStatus.Reserved)
+{
+    <form method="post" asp-action="Borrow" asp-route-id="@Model.Id" class="d-inline">
+        <button type="submit" class="btn btn-success">Xác nhận mượn</button>
+    </form>
+}
+else if (Model.Status == Library.Contracts.Enums.ReservationStatus.Borrowed)
+{
+    <form method="post" asp-action="Return" asp-route-id="@Model.Id" class="d-inline">
+        <button type="submit" class="btn btn-warning">Trả sách</button>
+    </form>
+}
+else if (Model.Status == Library.Contracts.Enums.ReservationStatus.Pending)
+{
+    <div class="alert alert-info">Đơn đang chờ worker xử lý. Hãy tải lại trang sau vài giây.</div>
+}
+
+<a class="btn btn-secondary ms-2" asp-action="Index">Quay lại danh sách</a>

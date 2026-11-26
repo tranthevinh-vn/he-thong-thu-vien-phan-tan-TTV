@@ -22,18 +22,17 @@ public static class ReservationsEndpoints
                 return Results.BadRequest(new { error = "Người dùng không tồn tại." });
             }
 
-            if (!await db.Books.AnyAsync(b => b.Id == request.BookId, ct))
+            var bookTitle = await db.Books
+                .Where(b => b.Id == request.BookId)
+                .Select(b => b.Title)
+                .FirstOrDefaultAsync(ct);
+
+            if (bookTitle is null)
             {
                 return Results.BadRequest(new { error = "Sách không tồn tại." });
             }
 
-            var correlationId = http.Request.Headers["X-Correlation-Id"].FirstOrDefault();
-            if (string.IsNullOrWhiteSpace(correlationId))
-            {
-                correlationId = Guid.NewGuid().ToString("N");
-            }
-            http.Response.Headers["X-Correlation-Id"] = correlationId;
-
+            var correlationId = ResolveCorrelationId(http);
             var now = DateTime.UtcNow;
 
             var reservation = new Reservation
@@ -71,7 +70,16 @@ public static class ReservationsEndpoints
             await db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
 
-            var body = new { id = reservation.Id, status = reservation.Status, createdAt = reservation.CreatedAt };
+            var body = new ReservationDto
+            {
+                Id = reservation.Id,
+                UserId = reservation.UserId,
+                BookId = reservation.BookId,
+                BookTitle = bookTitle,
+                Status = reservation.Status,
+                CreatedAt = reservation.CreatedAt
+            };
+
             return Results.Accepted($"/reservations/{reservation.Id}", body);
         })
         .WithName("CreateReservation");
@@ -98,6 +106,107 @@ public static class ReservationsEndpoints
         })
         .WithName("GetReservationById");
 
+        group.MapPost("/{id:guid}/borrow", async (Guid id, LibraryDbContext db, HttpContext http, CancellationToken ct) =>
+        {
+            var reservation = await db.Reservations
+                .Include(r => r.Book)
+                .Include(r => r.BookCopy)
+                .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+            if (reservation is null)
+            {
+                return Results.NotFound();
+            }
+
+            if (reservation.Status != ReservationStatus.Reserved)
+            {
+                return Results.Conflict(new { error = "Chỉ có thể mượn khi đơn ở trạng thái Reserved." });
+            }
+
+            if (reservation.BookCopy is null)
+            {
+                return Results.Conflict(new { error = "Đơn chưa được gán bản sách." });
+            }
+
+            reservation.Status = ReservationStatus.Borrowed;
+            reservation.BookCopy.Status = BookCopyStatus.Borrowed;
+
+            AddAuditLog(db, reservation, "reservation.borrowed", ResolveCorrelationId(http));
+            await db.SaveChangesAsync(ct);
+
+            return Results.Ok(ToDto(reservation));
+        })
+        .WithName("BorrowReservation");
+
+        group.MapPost("/{id:guid}/return", async (Guid id, LibraryDbContext db, HttpContext http, CancellationToken ct) =>
+        {
+            var reservation = await db.Reservations
+                .Include(r => r.Book)
+                .Include(r => r.BookCopy)
+                .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+            if (reservation is null)
+            {
+                return Results.NotFound();
+            }
+
+            if (reservation.Status != ReservationStatus.Borrowed)
+            {
+                return Results.Conflict(new { error = "Chỉ có thể trả khi đơn ở trạng thái Borrowed." });
+            }
+
+            if (reservation.BookCopy is null)
+            {
+                return Results.Conflict(new { error = "Đơn chưa được gán bản sách." });
+            }
+
+            reservation.Status = ReservationStatus.Returned;
+            reservation.BookCopy.Status = BookCopyStatus.Available;
+
+            AddAuditLog(db, reservation, "reservation.returned", ResolveCorrelationId(http));
+            await db.SaveChangesAsync(ct);
+
+            return Results.Ok(ToDto(reservation));
+        })
+        .WithName("ReturnReservation");
+
         return app;
+    }
+
+    private static ReservationDto ToDto(Reservation reservation) => new()
+    {
+        Id = reservation.Id,
+        UserId = reservation.UserId,
+        BookId = reservation.BookId,
+        BookTitle = reservation.Book?.Title ?? string.Empty,
+        Status = reservation.Status,
+        CreatedAt = reservation.CreatedAt,
+        ProcessedAt = reservation.ProcessedAt,
+        RejectReason = reservation.RejectReason
+    };
+
+    private static void AddAuditLog(LibraryDbContext db, Reservation reservation, string eventName, string correlationId)
+    {
+        db.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            ReservationId = reservation.Id,
+            Event = eventName,
+            Status = reservation.Status.ToString(),
+            Timestamp = DateTime.UtcNow,
+            CorrelationId = correlationId
+        });
+    }
+
+    private static string ResolveCorrelationId(HttpContext http)
+    {
+        var correlationId = http.Request.Headers["X-Correlation-Id"].FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(correlationId))
+        {
+            correlationId = Guid.NewGuid().ToString("N");
+        }
+
+        http.Response.Headers["X-Correlation-Id"] = correlationId;
+        return correlationId;
     }
 }

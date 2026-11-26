@@ -93,6 +93,7 @@ docker compose up -d --build
 |--------|----------|
 | GET | `/books` |
 | GET | `/books/{id}` |
+| GET | `/users` |
 | POST | `/reservations` |
 | GET | `/reservations/{id}` |
 | GET | `/users/{userId}/reservations` |
@@ -111,6 +112,6 @@ docker compose up -d --build
 - [x] Tuần 3: Read API + MVC tra cứu
 - [x] Tuần 4: Reservation + Outbox
 - [x] Tuần 5: Worker + chống oversell + idempotent + retry/DLQ
-- [ ] Tuần 6: Borrow/Return + Audit + Correlation ID
+- [x] Tuần 6: Borrow/Return + Audit + Correlation ID
 - [ ] Tuần 7: Docker hóa full stack + resilience
 - [ ] Tuần 8: Test + báo cáo + demo

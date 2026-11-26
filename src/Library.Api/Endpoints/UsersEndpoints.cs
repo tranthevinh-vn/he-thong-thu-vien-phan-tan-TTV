@@ -11,6 +11,18 @@ public static class UsersEndpoints
     {
         var group = app.MapGroup("/users").WithTags("Users");
 
+        group.MapGet("/", async (LibraryDbContext db, CancellationToken ct) =>
+        {
+            var users = await db.Users
+                .AsNoTracking()
+                .OrderBy(u => u.Name)
+                .Select(u => new UserDto { Id = u.Id, Name = u.Name, Email = u.Email })
+                .ToListAsync(ct);
+
+            return Results.Ok(users);
+        })
+        .WithName("GetUsers");
+
         group.MapGet("/{userId:guid}/reservations", async (Guid userId, string? status, LibraryDbContext db, CancellationToken ct) =>
         {
             if (!await db.Users.AnyAsync(u => u.Id == userId, ct))
