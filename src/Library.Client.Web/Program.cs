@@ -6,10 +6,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 var apiBaseUrl = builder.Configuration["LibraryApi:BaseUrl"] ?? "http://localhost:8080";
+builder.Services.AddTransient<CorrelationIdHandler>();
 builder.Services.AddHttpClient<LibraryApiClient>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl);
-});
+}).AddHttpMessageHandler<CorrelationIdHandler>();
 
 var app = builder.Build();
 
