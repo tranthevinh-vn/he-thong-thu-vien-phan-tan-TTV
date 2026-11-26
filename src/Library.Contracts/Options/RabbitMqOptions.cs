@@ -12,4 +12,5 @@ public class RabbitMqOptions
     public string AuditQueue { get; set; } = "reservation-audit";
     public string DeadLetterExchange { get; set; } = "library.dlx";
     public string DeadLetterQueue { get; set; } = "reservation-worker.dlq";
+    public string AuditDeadLetterQueue { get; set; } = "reservation-audit.dlq";
 }

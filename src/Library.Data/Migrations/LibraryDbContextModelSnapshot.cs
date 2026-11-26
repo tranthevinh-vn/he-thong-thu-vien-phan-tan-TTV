@@ -352,14 +352,17 @@ namespace Library.Data.Migrations
 
             modelBuilder.Entity("Library.Data.Entities.ProcessedMessage", b =>
                 {
+                    b.Property<string>("Consumer")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<Guid>("MessageId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("ProcessedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("MessageId");
+                    b.HasKey("Consumer", "MessageId");
 
                     b.ToTable("ProcessedMessages", (string)null);
                 });
