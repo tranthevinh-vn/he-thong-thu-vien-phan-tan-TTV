@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Library.Contracts.Domain;
 using Library.Contracts.Enums;
 using Library.Contracts.Events;
 using Library.Contracts.Messaging;
@@ -158,7 +159,7 @@ public sealed class ReservationConsumer : BackgroundService
 
         var now = DateTime.UtcNow;
 
-        if (reservation.Status != ReservationStatus.Pending)
+        if (!ReservationStateMachine.CanProcess(reservation.Status))
         {
             _logger.LogInformation("Reservation {ReservationId} đã xử lý (status={Status})", reservation.Id, reservation.Status);
             db.ProcessedMessages.Add(new ProcessedMessage { Consumer = ConsumerName, MessageId = evt.MessageId, ProcessedAt = now });

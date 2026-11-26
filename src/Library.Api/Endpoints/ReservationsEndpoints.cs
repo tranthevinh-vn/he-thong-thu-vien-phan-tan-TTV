@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Library.Contracts.Domain;
 using Library.Contracts.Dtos;
 using Library.Contracts.Enums;
 using Library.Contracts.Events;
@@ -118,7 +119,7 @@ public static class ReservationsEndpoints
                 return Results.NotFound();
             }
 
-            if (reservation.Status != ReservationStatus.Reserved)
+            if (!ReservationStateMachine.CanBorrow(reservation.Status))
             {
                 return Results.Conflict(new { error = "Chỉ có thể mượn khi đơn ở trạng thái Reserved." });
             }
@@ -150,7 +151,7 @@ public static class ReservationsEndpoints
                 return Results.NotFound();
             }
 
-            if (reservation.Status != ReservationStatus.Borrowed)
+            if (!ReservationStateMachine.CanReturn(reservation.Status))
             {
                 return Results.Conflict(new { error = "Chỉ có thể trả khi đơn ở trạng thái Borrowed." });
             }
