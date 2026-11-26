@@ -109,7 +109,7 @@ docker compose up -d --build
 - [x] Tuần 1: Khởi tạo solution, hạ tầng Docker
 - [x] Tuần 2: Domain + EF migration + seed
 - [x] Tuần 3: Read API + MVC tra cứu
-- [ ] Tuần 4: Reservation + Outbox
+- [x] Tuần 4: Reservation + Outbox
 - [ ] Tuần 5: Worker + chống oversell + idempotent + retry/DLQ
 - [ ] Tuần 6: Borrow/Return + Audit + Correlation ID
 - [ ] Tuần 7: Docker hóa full stack + resilience

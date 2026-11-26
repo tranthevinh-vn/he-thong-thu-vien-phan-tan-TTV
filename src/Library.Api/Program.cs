@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 using Library.Api.Endpoints;
+using Library.Api.Services;
+using Library.Contracts.Options;
 using Library.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +17,10 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
+builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
+builder.Services.AddSingleton<RabbitMqPublisher>();
+builder.Services.AddHostedService<OutboxPublisher>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -28,5 +34,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapGet("/", () => Results.Ok(new { name = "Library API", status = "ok" }));
 app.MapBooksEndpoints();
+app.MapReservationsEndpoints();
+app.MapUsersEndpoints();
 
 app.Run();
