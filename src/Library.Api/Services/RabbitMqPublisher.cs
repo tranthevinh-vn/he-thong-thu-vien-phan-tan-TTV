@@ -43,6 +43,19 @@ public sealed class RabbitMqPublisher : IAsyncDisposable
             cancellationToken: ct);
     }
 
+    public async Task<bool> PingAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var channel = await GetChannelAsync(ct);
+            return channel.IsOpen;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private async Task<IChannel> GetChannelAsync(CancellationToken ct)
     {
         if (_channel is { IsOpen: true })
