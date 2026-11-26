@@ -79,34 +79,13 @@ public sealed class RabbitMqPublisher : IAsyncDisposable
             _channel = await _connection.CreateChannelAsync(
                 new CreateChannelOptions(publisherConfirmationsEnabled: true, publisherConfirmationTrackingEnabled: true),
                 ct);
-            await DeclareTopologyAsync(_channel, ct);
+            await RabbitMqTopology.DeclareAsync(_channel, _options, ct);
             return _channel;
         }
         finally
         {
             _gate.Release();
         }
-    }
-
-    private async Task DeclareTopologyAsync(IChannel channel, CancellationToken ct)
-    {
-        await channel.ExchangeDeclareAsync(_options.Exchange, ExchangeType.Topic, durable: true, autoDelete: false, cancellationToken: ct);
-        await channel.ExchangeDeclareAsync(_options.DeadLetterExchange, ExchangeType.Direct, durable: true, autoDelete: false, cancellationToken: ct);
-
-        var workerArgs = new Dictionary<string, object?>
-        {
-            ["x-dead-letter-exchange"] = _options.DeadLetterExchange,
-            ["x-dead-letter-routing-key"] = _options.DeadLetterQueue
-        };
-
-        await channel.QueueDeclareAsync(_options.ReservationQueue, durable: true, exclusive: false, autoDelete: false, arguments: workerArgs, cancellationToken: ct);
-        await channel.QueueBindAsync(_options.ReservationQueue, _options.Exchange, RoutingKeys.ReservationRequested, cancellationToken: ct);
-
-        await channel.QueueDeclareAsync(_options.AuditQueue, durable: true, exclusive: false, autoDelete: false, cancellationToken: ct);
-        await channel.QueueBindAsync(_options.AuditQueue, _options.Exchange, RoutingKeys.ReservationWildcard, cancellationToken: ct);
-
-        await channel.QueueDeclareAsync(_options.DeadLetterQueue, durable: true, exclusive: false, autoDelete: false, cancellationToken: ct);
-        await channel.QueueBindAsync(_options.DeadLetterQueue, _options.DeadLetterExchange, _options.DeadLetterQueue, cancellationToken: ct);
     }
 
     public async ValueTask DisposeAsync()

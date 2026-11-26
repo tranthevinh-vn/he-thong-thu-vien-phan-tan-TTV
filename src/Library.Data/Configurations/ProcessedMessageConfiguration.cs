@@ -9,6 +9,7 @@ public class ProcessedMessageConfiguration : IEntityTypeConfiguration<ProcessedM
     public void Configure(EntityTypeBuilder<ProcessedMessage> builder)
     {
         builder.ToTable("ProcessedMessages");
-        builder.HasKey(x => x.MessageId);
+        builder.HasKey(x => new { x.Consumer, x.MessageId });
+        builder.Property(x => x.Consumer).HasMaxLength(50).IsRequired();
     }
 }
