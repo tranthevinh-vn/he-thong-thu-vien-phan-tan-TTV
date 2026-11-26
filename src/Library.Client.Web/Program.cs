@@ -1,7 +1,15 @@
+using Library.Client.Web.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+var apiBaseUrl = builder.Configuration["LibraryApi:BaseUrl"] ?? "http://localhost:8080";
+builder.Services.AddHttpClient<LibraryApiClient>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
 
 var app = builder.Build();
 

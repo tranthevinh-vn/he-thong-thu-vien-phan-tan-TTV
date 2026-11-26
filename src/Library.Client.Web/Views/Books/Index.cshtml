@@ -1,0 +1,78 @@
+@model Library.Contracts.Dtos.PagedResult<Library.Contracts.Dtos.BookDto>
+@{
+    ViewData["Title"] = "Danh sách sách";
+    var query = ViewData["Query"] as string;
+    var totalPages = Model.PageSize > 0 ? (int)Math.Ceiling(Model.Total / (double)Model.PageSize) : 0;
+}
+
+<h1>Danh sách sách</h1>
+
+<form method="get" asp-action="Index" class="row g-2 mb-3">
+    <div class="col-md-6">
+        <input type="text" name="q" value="@query" class="form-control"
+               placeholder="Tìm theo tiêu đề, tác giả, ISBN, thể loại..." />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+    </div>
+</form>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Tiêu đề</th>
+            <th>Tác giả</th>
+            <th>Thể loại</th>
+            <th class="text-center">Tổng bản</th>
+            <th class="text-center">Còn trống</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @if (Model.Items.Count == 0)
+    {
+        <tr>
+            <td colspan="6" class="text-center text-muted">Không có sách phù hợp.</td>
+        </tr>
+    }
+    else
+    {
+        foreach (var book in Model.Items)
+        {
+            <tr>
+                <td>@book.Title</td>
+                <td>@book.Author</td>
+                <td>@book.Category</td>
+                <td class="text-center">@book.TotalCopies</td>
+                <td class="text-center">
+                    @if (book.AvailableCopies > 0)
+                    {
+                        <span class="badge bg-success">@book.AvailableCopies</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">0</span>
+                    }
+                </td>
+                <td>
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@book.Id">Chi tiết</a>
+                </td>
+            </tr>
+        }
+    }
+    </tbody>
+</table>
+
+<nav aria-label="Phân trang">
+    <ul class="pagination">
+        <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-q="@query" asp-route-page="@(Model.Page - 1)">Trước</a>
+        </li>
+        <li class="page-item disabled">
+            <span class="page-link">Trang @Model.Page / @(totalPages == 0 ? 1 : totalPages)</span>
+        </li>
+        <li class="page-item @(Model.Page >= totalPages ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-q="@query" asp-route-page="@(Model.Page + 1)">Sau</a>
+        </li>
+    </ul>
+</nav>
