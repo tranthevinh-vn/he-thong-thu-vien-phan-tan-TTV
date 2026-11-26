@@ -78,6 +78,12 @@ dotnet run --project src/Library.Audit
 dotnet run --project src/Library.Client.Web
 ```
 
+Chạy kiểm thử:
+
+```bash
+dotnet test
+```
+
 ## Chạy toàn hệ thống bằng Docker (demo)
 
 ```bash
@@ -108,6 +114,16 @@ docker compose up -d --build
 
 `Pending -> Reserved -> Borrowed -> Returned` (hoặc `Rejected`)
 
+## Kịch bản demo
+
+1. Trong VM: `docker compose up -d --build` (dev hạ tầng: `docker compose -f docker-compose.infra.yml up -d`).
+2. Mở client `http://<VM_IP>:8081`, vào **Sách** → **Chi tiết** → chọn người mượn → **Đặt mượn**.
+3. API lưu đơn `Pending` + outbox trong cùng transaction; OutboxPublisher phát `reservation.requested`.
+4. Worker khoá bản sách bằng `FOR UPDATE SKIP LOCKED`, cập nhật `Reserved`/`Rejected` và ghi outbox `reservation.processed`.
+5. Audit nhận cả hai event và ghi `AuditLogs`; theo dõi đơn ở mục **Đặt mượn**.
+6. Đơn `Reserved` → **Xác nhận mượn**; đơn `Borrowed` → **Trả sách**.
+7. Kiểm tra `http://<VM_IP>:8080/health`, RabbitMQ management `http://<VM_IP>:15672`, log Serilog của 4 tiến trình.
+
 ## Lộ trình
 
 - [x] Tuần 1: Khởi tạo solution, hạ tầng Docker
@@ -117,4 +133,4 @@ docker compose up -d --build
 - [x] Tuần 5: Worker + chống oversell + idempotent + retry/DLQ
 - [x] Tuần 6: Borrow/Return + Audit + Correlation ID
 - [x] Tuần 7: Docker hóa full stack + resilience
-- [ ] Tuần 8: Test + báo cáo + demo
+- [x] Tuần 8: Test + báo cáo + demo
